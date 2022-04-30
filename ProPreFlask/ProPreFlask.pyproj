@@ -30,6 +30,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ProPreFlask\build_seq.py" />
     <Compile Include="runserver.py" />
     <Compile Include="ProPreFlask\__init__.py" />
     <Compile Include="ProPreFlask\views.py" />
