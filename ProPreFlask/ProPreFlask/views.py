@@ -3,7 +3,7 @@ Routes and views for the flask application.
 """
 
 # Important modules for our ProPre
-import build_seq
+from ProPreFlask.build_seq import build_seq
 from io import StringIO
 from Bio import SeqIO
 from pymol import cmd
@@ -158,8 +158,8 @@ _type = 'antiparallel'
 def GetAmino(seq=''):
     seq = '>Alpha\n' + seq + '\n'
     for seq_record in SeqIO.parse(StringIO(seq), "fasta"):
-        build_seq.build_seq(seq_record.seq, _type)
+        build_seq(seq_record.seq, _type)
         cmd.cmd.select(document,"all")
         cmd.cmd.save("temp.pdb", document, -1, 'pdb')
         cmd.cmd.delete("all")
-    return send_file('temp.pdb')
+    return send_file('../temp.pdb')
