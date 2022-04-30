@@ -149,17 +149,25 @@ for read in reads:
 
 document = '_document'
 filename = 'P69905.fasta'
+
+# Different types of helix visualization.
+
+_type = '3/10 helix'
+#_type = 'helix'
+#_type = 'parallel'
 #_type = 'polypro'
-_type = 'antiparallel'
+#_type = 'antiparallel'
 
 
 
 @app.route('/GetAmino/<string:seq>')
 def GetAmino(seq=''):
-    seq = '>Alpha\n' + seq + '\n'
+    #>My fasta file with headers
+    #AGAWDFAWDAWDAD.......
+    seq = '>Alpha\n' + seq + '\n' # Virtual file handle from sequence string.
     for seq_record in SeqIO.parse(StringIO(seq), "fasta"):
-        build_seq(seq_record.seq, _type)
-        cmd.cmd.select(document,"all")
-        cmd.cmd.save("temp.pdb", document, -1, 'pdb')
-        cmd.cmd.delete("all")
-    return send_file('../temp.pdb')
+        build_seq(seq_record.seq, _type) # The actual sequence.
+        cmd.cmd.select(document,"all") # Determining document type.
+        cmd.cmd.save("temp.pdb", document, -1, 'pdb') # Protein Data Bank file format.
+        cmd.cmd.delete("all") # Delete unnecessary.
+    return send_file('../temp.pdb') # Flask method to return files as content response result.
