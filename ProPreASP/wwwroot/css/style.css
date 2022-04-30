@@ -1,0 +1,119 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
+
+body {
+  font-family: "Roboto", sans-serif;
+  background-color: #eaeaea;
+}
+
+.app {
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  min-height: 100vh;
+  padding: 0 2rem;
+}
+/* header */
+
+.header .header-top {
+  padding: 2rem;
+  background-color: #353535;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header .logo {
+  font-size: 2rem;
+  color: #fff;
+}
+
+.header .search input[type="text"] {
+  outline: none;
+  padding: 8px 16px;
+  outline: none;
+  color: #202020;
+  background: #ffffff;
+  border: none;
+  width: 90%;
+  line-height: 1.5em;
+}
+
+.header .search input[type="submit"] {
+  background: #fee100 url(../images/search.png) no-repeat 10px 8px;
+  padding: 8px 20px;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  line-height: 1.5em;
+}
+
+.main-wrapper #amino {
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.main-wrapper .content h2 {
+  text-transform: capitalize;
+  font-size: 1.5rem;
+}
+
+.main-wrapper .main-content {
+  background-color: #bae1ec;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.main-wrapper .main-content h3 {
+  font-size: 1rem;
+}
+
+.main-content .form {
+  width: 70%;
+}
+
+.main-content .form textarea {
+  width: 100%;
+  padding: 0.5rem 1rem;
+}
+
+.main-content .form__footer .reset {
+  padding: 0.3rem 1rem;
+  background-color: #95dd91;
+  border: 3px solid #95dd91;
+}
+
+.main-content .form__footer .submit {
+  padding: 0.3rem 1rem;
+  color: #fff;
+  background-color: #2a7e43;
+  border: 3px solid #2a7e43;
+
+  margin-left: 1rem;
+}
+
+.main-content .form__footer input:hover {
+  background-color: #fff;
+  color: #2a7e43;
+}
+
+.footer {
+    position: relative;
+  margin-top: 1rem;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .header .logo {
+    font-size: 1.2rem;
+  }
+  .header .search {
+    display: none;
+  }
+
+  .main-content .form {
+    width: 100%;
+  }
+
+  .footer h3 {
+    font-size: 1rem;
+  }
+}

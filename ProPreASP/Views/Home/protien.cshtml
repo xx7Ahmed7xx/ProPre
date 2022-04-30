@@ -1,0 +1,25 @@
+﻿
+@{
+    ViewData["Title"] = "protien";
+    ViewData["ProtienActive"] = "active";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="content">
+          <h3 class="title">
+            🧬<span style="color: #020291">PredictProtein</span> is free to use
+            and open to all users with no login requirements.🧬
+          </h3>
+          <p>**The web server currently does not support batch processing.**</p>
+        </div>
+        <textarea
+          name="amino"
+          id="amino"
+          placeholder="Enter an amino-acid sequence (one letter code)"
+          cols="55"
+          rows="20"
+        ></textarea>
+        <button class="btn btn-primary mt-3">PredictProtien</button>
+        <!-- output will show here... -->
+      <section class="output"></section>

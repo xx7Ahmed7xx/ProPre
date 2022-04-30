@@ -1,0 +1,32 @@
+﻿
+@{
+    ViewData["Title"] = "Dna";
+    ViewData["DnaActive"] = "active";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="main-content">
+          <p>
+            Translate is a tool which allows the translation of a nucleotide
+            (DNA/RNA) sequence to a protein sequence.
+          </p>
+          <hr />
+          <h3>DNA or RNA sequence</h3>
+          <form class="form" method="post" asp-action="dna">
+            <textarea
+              name="dnaSeq"
+              id="dna"
+              rows="8"
+              placeholder="please enter a DNA or RNA sequence - numbers and blanks are ignored"
+            ></textarea>
+            
+            <div class="form__footer text-center">
+              <input type="reset" value="reset" class="btn reset" />
+              <input
+                type="submit"
+                value="Translate!"
+                class="text-uppercase btn submit"
+              />
+            </div>
+          </form>
+        </div>
