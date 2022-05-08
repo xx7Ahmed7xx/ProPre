@@ -12,7 +12,7 @@ The people who worked hard to get this project done:
 1. Ahmed Ayman Mansour (Backend - Data Science Engineer)
 2. Ahmed Alaa Elsayed AbdelGhaffar (Backend - Machine Learning Engineer)
 3. AbdelRahman Mohammed ElFarsy (Backend - Machine Learning Engineer)
-4. Ahmed Mohammed ElDreny (Frontend - UI/UX Engineer)
+4. Ahmed Mohammed ElDreny (Frontend - React.js Software Developer)
 5. Osama Samir Etman (Frontend - UI/UX Engineer)
 6. Khaled ElSaeed ElNaghy (Mobile Flutter - UI/UX Engineer)
 ## The purpose of the solution
