@@ -1,0 +1,38 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <style>
+            #app {
+                
+            }
+        </style>
+        <link rel="stylesheet" type="text/css" href="~/css/molstar.css" />
+    </head>
+    <body>
+        <div id="app"></div>
+        <script type="text/javascript" src="~/js/molstar.js"></script>
+        <script type="text/javascript">
+            molstar.Viewer.create('app', {
+                layoutIsExpanded: true,
+                layoutShowControls: true,
+                layoutShowRemoteState: false,
+                layoutShowSequence: true,
+                layoutShowLog: false,
+                layoutShowLeftPanel: false,
+
+                viewportShowExpand: false,
+                viewportShowSelectionMode: false,
+                viewportShowAnimation: false,
+
+                pdbProvider: 'rcsb',
+                emdbProvider: 'rcsb',
+            }).then(viewer => {
+                viewer.loadStructureFromUrl('/pdbFiles/@ViewData["filePath"]', format='pdb')
+            });
+        </script>
+    </body>
+</html>

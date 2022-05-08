@@ -7,10 +7,19 @@ from ProPreFlask.build_seq import build_seq
 from io import StringIO
 from Bio import SeqIO
 from pymol import cmd
+from flask import jsonify
+
+from itertools import product
+from collections import deque
 
 
 from datetime import datetime
 from flask import render_template
+
+import os
+from flask import Flask, flash, request, redirect, url_for
+from werkzeug.utils import secure_filename
+
 from flask import send_file
 from ProPreFlask import app
 
@@ -125,17 +134,17 @@ def dna2rna(seq):
     return temp
 
 
-def readfasta():
+def readfasta(path=''):
     '''
     Returns all sequences from a fasta file.
     '''
-    Reads = list()
-    with open('test.fasta', 'r') as lines:
+    Reads = str()
+    with open(path, 'r') as lines:
         for line in lines:
             if not line.startswith('>'):
                 line = line.replace("\n", "")
                 line = line.replace("\r", "")
-                Reads.append(line[1:])
+                Reads += line[1:]
     return Reads
 
 '''
@@ -152,16 +161,16 @@ filename = 'P69905.fasta'
 
 # Different types of helix visualization.
 
-_type = '3/10 helix'
-#_type = 'helix'
+#_type = '3/10 helix'
+_type = 'helix'
 #_type = 'parallel'
 #_type = 'polypro'
 #_type = 'antiparallel'
 
 
 
-@app.route('/GetAmino/<string:seq>')
-def GetAmino(seq=''):
+@app.route('/GetAminoSeq/<string:seq>')
+def GetAminoSeq(seq=''):
     #>My fasta file with headers
     #AGAWDFAWDAWDAD.......
     seq = '>Alpha\n' + seq + '\n' # Virtual file handle from sequence string.
@@ -171,3 +180,182 @@ def GetAmino(seq=''):
         cmd.cmd.save("temp.pdb", document, -1, 'pdb') # Protein Data Bank file format.
         cmd.cmd.delete("all") # Delete unnecessary.
     return send_file('../temp.pdb') # Flask method to return files as content response result.
+
+@app.route('/GetAminoFas', methods=['POST'])
+def GetAminoFas():
+    #>My fasta file from response files
+    uploaded_file = request.files['file']
+    if uploaded_file.filename != '':
+        uploaded_file.save(uploaded_file.filename)
+        for seq_record in SeqIO.parse(f"../{uploaded_file.filename}", "fasta"):
+            build_seq(seq_record.seq, _type) # The actual sequence.
+            cmd.cmd.select(document,"all") # Determining document type.
+            cmd.cmd.save("temp.pdb", document, -1, 'pdb') # Protein Data Bank file format.
+            cmd.cmd.delete("all") # Delete unnecessary.
+    return send_file('../temp.pdb') # Flask method to return files as content response result.
+
+
+@app.route('/GetAlignScore/<string:seq>/<string:diseaseName>')
+def GetAlignSeq(seq='', diseaseName=''):
+    testSeq = readfasta(app.root_path + '/static/fastaDiseases/' + diseaseName)
+    #testSeq = 'ATGGTTGCTGCCAACCCAGAAAAG'
+    tempScore = list()
+    # Old slow brute force method.
+    #alignments = list(all_alignments(testSeq, seq))
+    # New needleman_wunsch method.
+    myAlignment = print_alignment(testSeq, seq, needleman_wunsch(testSeq, seq))
+    return jsonify(
+            Score = align_score_nw(myAlignment),
+            Alignment = myAlignment
+        )
+
+def align_score_nw(alignment = [], matchScr = 1, gabScr = 0, misScr = -1):
+    '''
+    Returns the score of an alignment in X%, based on score schema used.
+    '''
+    totalScore = int()
+    lengthSeq = len(alignment[0])
+    for i in range(0, lengthSeq):
+        if alignment[0][i] == alignment[1][i]:
+            totalScore+=matchScr
+        if alignment[1][i] == '-':
+            totalScore+=gabScr
+        elif alignment[0][i] != alignment[1][i]:
+            totalScore+=misScr
+    perfectScore = lengthSeq * matchScr
+    realScore = float((totalScore / perfectScore) * 100)
+    return realScore
+
+def print_alignment(x, y, alignment):
+    line1 = "".join(
+        "-" if i is None else x[i] for i, _ in alignment
+    )
+    line2 = "".join(
+        "-" if j is None else y[j] for _, j in alignment
+    )
+    listRet = list()
+    listRet.append(line1)
+    listRet.append(line2)
+    return listRet
+
+
+def needleman_wunsch(x, y):
+    """Run the Needleman-Wunsch algorithm on two sequences.
+
+    x, y -- sequences.
+
+    Code based on pseudocode in Section 3 of:
+
+    Naveed, Tahir; Siddiqui, Imitaz Saeed; Ahmed, Shaftab.
+    "Parallel Needleman-Wunsch Algorithm for Grid." n.d.
+    https://upload.wikimedia.org/wikipedia/en/c/c4/ParallelNeedlemanAlgorithm.pdf
+    """
+    N, M = len(x), len(y)
+    s = lambda a, b: int(a == b)
+
+    DIAG = -1, -1
+    LEFT = -1, 0
+    UP = 0, -1
+
+    # Create tables F and Ptr
+    F = {}
+    Ptr = {}
+
+    F[-1, -1] = 0
+    for i in range(N):
+        F[i, -1] = -i
+    for j in range(M):
+        F[-1, j] = -j
+
+    option_Ptr = DIAG, LEFT, UP
+    for i, j in product(range(N), range(M)):
+        option_F = (
+            F[i - 1, j - 1] + s(x[i], y[j]),
+            F[i - 1, j] - 1,
+            F[i, j - 1] - 1,
+        )
+        F[i, j], Ptr[i, j] = max(zip(option_F, option_Ptr))
+
+    # Work backwards from (N - 1, M - 1) to (0, 0)
+    # to find the best alignment.
+    alignment = deque()
+    i, j = N - 1, M - 1
+    while i >= 0 and j >= 0:
+        direction = Ptr[i, j]
+        if direction == DIAG:
+            element = i, j
+        elif direction == LEFT:
+            element = i, None
+        elif direction == UP:
+            element = None, j
+        alignment.appendleft(element)
+        di, dj = direction
+        i, j = i + di, j + dj
+    while i >= 0:
+        alignment.appendleft((i, None))
+        i -= 1
+    while j >= 0:
+        alignment.appendleft((None, j))
+        j -= 1
+
+    return list(alignment)
+
+
+def alignment_score(x, y, alignment):
+    """Score an alignment.
+
+    x, y -- sequences.
+    alignment -- an alignment of x and y.
+
+    different is 0, gap is 1 & same are 2.
+    """
+    score_gap = +1
+    score_same = +2
+    score_different = 0
+
+    score = 0
+    for i, j in alignment:
+        if (i is None) or (j is None):
+            score += score_gap
+        elif x[i] == y[j]:
+            score += score_same
+        elif x[i] != y[j]:
+            score += score_different
+
+    return score
+
+def all_alignments(x, y):
+    """Return an iterable of all alignments of two
+    sequences.
+
+    x, y -- Sequences.
+    """
+
+    def F(x, y):
+        """A helper function that recursively builds the
+        alignments.
+
+        x, y -- Sequence indices for the original x and y.
+        """
+        if len(x) == 0 and len(y) == 0:
+            yield deque()
+
+        scenarios = []
+        if len(x) > 0 and len(y) > 0:
+            scenarios.append((x[0], x[1:], y[0], y[1:]))
+        if len(x) > 0:
+            scenarios.append((x[0], x[1:], None, y))
+        if len(y) > 0:
+            scenarios.append((None, x, y[0], y[1:]))
+
+        # NOTE: "xh" and "xt" stand for "x-head" and "x-tail",
+        # with "head" being the front of the sequence, and
+        # "tail" being the rest of the sequence. Similarly for
+        # "yh" and "yt".
+        for xh, xt, yh, yt in scenarios:
+            for alignment in F(xt, yt):
+                alignment.appendleft((xh, yh))
+                yield alignment
+
+    alignments = F(range(len(x)), range(len(y)))
+    return map(list, alignments)

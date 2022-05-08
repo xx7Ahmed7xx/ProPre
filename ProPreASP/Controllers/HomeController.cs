@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProPreASP.Models;
 using System.Diagnostics;
-using System.Net;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ProPreASP.Controllers
 {
@@ -26,13 +27,29 @@ namespace ProPreASP.Controllers
             return View();
         }
 
+        public IActionResult Embedded3D(string filePath)
+        {
+            ViewData["filePath"] = filePath;
+            return View();
+        }
+
+        public async Task<JObject> GetJsonAlign(string dnaSeq, string diseaseName)
+        {
+            using (HttpClient hc = new HttpClient())
+            {
+                hc.Timeout = TimeSpan.FromSeconds(900);
+                var json = (await hc.GetStringAsync($"http://localhost:57000/GetAlignScore/{dnaSeq}/{diseaseName}"))
+                    .Replace("\u0022", "\"").Replace("\n", "");
+                return JObject.Parse(json);
+            }
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> dna(string dnaSeq)
+        public async Task<IActionResult> dna(string dnaSeq, string diseaseName)
         {
             // ATGGGTCCTTCAGTAGTTCCTATTAACCCA
-            var url = "http://127.0.0.1:56000/GetAmino/" + dnaSeq;
+            var url = "http://127.0.0.1:57000/GetAminoSeq/" + dnaSeq;
             var userSessionId = "a" + HttpContext.Session.Id;
             string webRootPath = _webHostEnvironment.WebRootPath;
             /*
@@ -42,13 +59,30 @@ namespace ProPreASP.Controllers
              DownloadFile(url, webRootPath + "\\pdbFiles", userSessionId + ".pdb"));
 
             var filePath = userSessionId + ".pdb";
-            return RedirectToAction("dna3d", new {filePath});
+            return RedirectToAction("dna3d", new {filePath, dnaSeq, diseaseName});
         }
 
-        public IActionResult dna3d(string filePath)
+        public async Task<IActionResult> dna3d(string filePath, string dnaSeq, string diseaseName)
         {
-            ViewData["filePath"] = filePath;
-            return View();
+            if (diseaseName == "rheumatoid arthritis cardiac")
+            {
+                var data = await GetJsonAlign(dnaSeq, "Homo-il34-v1.fasta");
+                ViewData["filePath"] = filePath;
+                ViewData["Score"] = Convert.ToDouble(data["Score"]);
+                ViewData["Alignment1"] = data["Alignment"][0];
+                ViewData["Alignment2"] = data["Alignment"][1];
+                return View();
+            }
+            else if (diseaseName == "rheumatoid arthritis in bones")
+            {
+                var data = await GetJsonAlign(dnaSeq, "Homo Sapiens RD44 1.fasta");
+                ViewData["filePath"] = filePath;
+                ViewData["Score"] = Convert.ToDouble(data["Score"]);
+                ViewData["Alignment1"] = data["Alignment"][0];
+                ViewData["Alignment2"] = data["Alignment"][1];
+                return View();
+            }
+            return BadRequest();
             //return Redirect("~/index.html");
         }
 
@@ -65,8 +99,11 @@ namespace ProPreASP.Controllers
         static async Task<byte[]?> GetUrlContent(string url)
         {
             using (var client = new HttpClient())
-            using (var result = await client.GetAsync(url))
-                return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
+            {
+                client.Timeout = TimeSpan.FromSeconds(900);
+                using (var result = await client.GetAsync(url))
+                    return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
+            }
         }
 
 

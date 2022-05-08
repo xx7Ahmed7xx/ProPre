@@ -40,10 +40,15 @@
     <Folder Include="ProPreFlask\static\" />
     <Folder Include="ProPreFlask\static\content\" />
     <Folder Include="ProPreFlask\static\fonts\" />
+    <Folder Include="ProPreFlask\static\fastaDiseases\" />
     <Folder Include="ProPreFlask\static\scripts\" />
     <Folder Include="ProPreFlask\templates\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ProPreFlask\static\fastaDiseases\Homo Sapiens C428 2.fasta" />
+    <Content Include="ProPreFlask\static\fastaDiseases\Homo Sapiens RD44 1.fasta" />
+    <Content Include="ProPreFlask\static\fastaDiseases\Homo-il34-v1.fasta" />
+    <Content Include="ProPreFlask\static\fastaDiseases\Homo-il34-v2.fasta" />
     <Content Include="requirements.txt" />
     <Content Include="ProPreFlask\static\content\bootstrap.css" />
     <Content Include="ProPreFlask\static\content\bootstrap.min.css" />
