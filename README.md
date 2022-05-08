@@ -9,15 +9,15 @@ Once both are run and ready to operate, You can navigate through the ASP applica
 ## Who are we
 We are some talented and ambitious students in Medical Informatics, We love making tools that help others and also enjoy bringing ideas into life.
 The people who worked hard to get this project done:
-1- Ahmed Ayman Mansour (Backend - Data Science Engineer)
-2- Ahmed Alaa Elsayed AbdelGhaffar (Backend - Machine Learning Engineer)
-3- AbdelRahman Mohammed ElFarsy (Backend - Machine Learning Engineer)
-4- Ahmed Mohammed ElDreny (Frontend - UI/UX Engineer)
-5- Osama Samir Etman (Frontend - UI/UX Engineer)
-6- Khaled ElSaeed ElNaghy (Mobile Flutter - UI/UX Engineer)
+1. Ahmed Ayman Mansour (Backend - Data Science Engineer)
+2. Ahmed Alaa Elsayed AbdelGhaffar (Backend - Machine Learning Engineer)
+3. AbdelRahman Mohammed ElFarsy (Backend - Machine Learning Engineer)
+4. Ahmed Mohammed ElDreny (Frontend - UI/UX Engineer)
+5. Osama Samir Etman (Frontend - UI/UX Engineer)
+6. Khaled ElSaeed ElNaghy (Mobile Flutter - UI/UX Engineer)
 ## The purpose of the solution
-1- You can get the 3D simulation of your DNA sequence, and predict the probability of having specific diseases in your DNA (more will be added)
-2- You can visualize and edit the 3D Visualization you got from out solution or from elsewhere.
+1. You can get the 3D simulation of your DNA sequence, and predict the probability of having specific diseases in your DNA (more will be added)
+2. You can visualize and edit the 3D Visualization you got from out solution or from elsewhere.
 more coming soon!
 ## License
 We don't offer any license. thus, We don't allow anyone to use it without proper allowance from our side and with legal papers.
