@@ -9,6 +9,10 @@ from Bio import SeqIO
 from pymol import cmd
 from flask import jsonify
 
+import dnachisel
+from dnachisel.biotools import reverse_translate
+from Bio.PDB import PDBParser
+
 from itertools import product
 from collections import deque
 
@@ -177,9 +181,57 @@ def GetAminoSeq(seq=''):
     for seq_record in SeqIO.parse(StringIO(seq), "fasta"):
         build_seq(seq_record.seq, _type) # The actual sequence.
         cmd.cmd.select(document,"all") # Determining document type.
-        cmd.cmd.save("temp.pdb", document, -1, 'pdb') # Protein Data Bank file format.
+        cmd.cmd.save(f"temp{str(seq)[-15:-1]}.pdb", document, -1, 'pdb') # Protein Data Bank file format.
+        #cmd.cmd.save(f"temp{str(seq)[-15:-1]}.fasta", document, -1, 'fasta')
         cmd.cmd.delete("all") # Delete unnecessary.
-    return send_file('../temp.pdb') # Flask method to return files as content response result.
+    return send_file(f'../temp{str(seq)[-15:-1]}.pdb') # Flask method to return files as content response result.
+
+
+@app.route('/PDB2SEQ', methods=['POST'])
+def GetSequenceFromPDB():
+    # Get file from request
+    uploaded_file = request.files['file']
+    if uploaded_file.filename != '':
+        uploaded_file.save(uploaded_file.filename)
+    # You can use a dict to convert three letter code to one letter code
+    d3to1 = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+    'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+    'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+    'ALA': 'A', 'VAL':'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
+    # Just an example input pdb
+    record = f'{uploaded_file.filename}'
+    # run parser
+    parser = PDBParser(QUIET=True)
+    structure = parser.get_structure('struct', record)    
+    # iterate each model, chain, and residue
+    # printing out the sequence for each chain
+
+    totalFileTest = str()
+    for model in structure:
+        for chain in model:
+            seq = []
+            for residue in chain:
+                try:
+                    seq.append(d3to1[residue.resname])
+                except:
+                    pass
+            totalFileTest = '>some_header\n' + ''.join(seq)
+    myfileName = get_file_name_no_extension(uploaded_file)
+    with open(f'{myfileName}.fasta', 'w') as f:
+        f.write(totalFileTest)
+
+    recordNew = dnachisel.load_record(f"{myfileName}.fasta")
+    hhhh = reverse_translate(str(recordNew.seq))
+    return str(hhhh)
+
+def get_file_name_no_extension(file) -> str:
+    filename_parts = file.filename.split('.')
+    if (len(filename_parts) > 2):
+        name_parts = [filename_parts[i] for i in range(len(filename_parts) - 1)]
+        return ".".join(name_parts)
+    return filename_parts[0]
+
+
 
 @app.route('/GetAminoFas', methods=['POST'])
 def GetAminoFas():
@@ -190,9 +242,9 @@ def GetAminoFas():
         for seq_record in SeqIO.parse(f"../{uploaded_file.filename}", "fasta"):
             build_seq(seq_record.seq, _type) # The actual sequence.
             cmd.cmd.select(document,"all") # Determining document type.
-            cmd.cmd.save("temp.pdb", document, -1, 'pdb') # Protein Data Bank file format.
-            cmd.cmd.delete("all") # Delete unnecessary.
-    return send_file('../temp.pdb') # Flask method to return files as content response result.
+            cmd.cmd.save(uploaded_file.filename, document, -1, 'pdb') # Protein Data Bank file format.
+            cmd.cmd.delete(uploaded_file.filename) # Delete unnecessary.
+    return send_file(f'../{uploaded_file.filename}') # Flask method to return files as content response result.
 
 
 @app.route('/GetAlignScore/<string:seq>/<string:diseaseName>')

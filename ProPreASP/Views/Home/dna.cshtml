@@ -12,7 +12,7 @@
           </p>
           <hr />
           <h3>DNA or RNA sequence</h3>
-          <form class="form" method="post" asp-action="dna">
+          <form class="form" method="post" asp-action="dna" enctype="multipart/form-data">
             <textarea
               name="dnaSeq"
               id="dna"
@@ -23,6 +23,10 @@
                 <option value="rheumatoid arthritis cardiac">Rheumatoid Arthritis Cardiac</option>
                 <option value="rheumatoid arthritis">Rheumatoid Arthritis in Bones</option>
             </select>
+            <div>
+                <h2>You can also use a FASTA file! (In case of using both, file would override..)</h2>
+                <input type="file" name="file" accept=".fasta" />
+            </div>
             <div class="form__footer text-center">
               <input type="reset" value="reset" class="btn reset" />
               <input

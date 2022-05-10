@@ -44,17 +44,35 @@ namespace ProPreASP.Controllers
             }
         }
 
+        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> dna(string dnaSeq, string diseaseName)
+        public async Task<IActionResult> dna(string dnaSeq, string diseaseName, IFormFile file)
         {
             // ATGGGTCCTTCAGTAGTTCCTATTAACCCA
             var url = "http://127.0.0.1:57000/GetAminoSeq/" + dnaSeq;
-            var userSessionId = "a" + HttpContext.Session.Id;
             string webRootPath = _webHostEnvironment.WebRootPath;
-            /*
-             GACCCGGCAGGCCTTGCGCGGGCAACATGGCGGCGCCCGGCGAGCGGGGCCGCTTCCACGGCGGGAACCTCTTCTTCCTGCCGGGGGGCGCGCGCTCCGAGATGATGGACGACCTGGCGACCGACGCGCGGGGCCGGGGCGCGGGGCGGAGAGACGCGGCCGCCTCGGCCTCGACGCCAGCCCAGGCGCCGACCTCCGATTCTCCTGTCGCCGAGGACGCCTCCCGGAGGCGGCCGTGCCGGGCCTGCGTCGACTTCAAGACGTGGATGCGGACGCAGCAGAAGGTGCAGTTCCCTGCCCGATTTCTCCCAGCCCCGCGCAGCCCCTGTCCCCGCCCCCGCCCAGGTACCCCGGCAGAGCTTCCCAGGGTTGCCTGTCCCTGAACCTTGCCCCCCGGGTAGGCCCGGCCTTACAGCCTTCATCCGCGCGTGGGTTGGATCGTCTGCAGGACTTTGGCCGGAGTCCAGTGGGCCACCGGCTGGGCCGTACAGTGGGGAGCTTTGGGCGCCTTTGTTCGGAGAATGAACTCACTCTCGGTCGGCCTGCTTCCGCAGCGGGAC
-             */
+            if (file != null)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    file.CopyTo(ms);
+                    var fileBytes = ms.ToArray();
+                    dnaSeq = "";
+                    if (!Directory.Exists(webRootPath + "\\pdbFiles")) Directory.CreateDirectory(webRootPath + "\\pdbFiles");
+                    await System.IO.File.WriteAllBytesAsync($"{webRootPath + "\\pdbFiles"}/{file.FileName}", fileBytes);
+                    foreach (var item in await System.IO.File.ReadAllLinesAsync($"{webRootPath + "\\pdbFiles"}/{file.FileName}"))
+                    {
+                        if (!item.StartsWith('>'))
+                        {
+                            dnaSeq += item;
+                        }
+                    }
+                    url = "http://127.0.0.1:57000/GetAminoSeq/" + dnaSeq;
+                }
+            }
+            var userSessionId = "a" + HttpContext.Session.Id;
             await Task.Run(() =>
              DownloadFile(url, webRootPath + "\\pdbFiles", userSessionId + ".pdb"));
 
@@ -111,6 +129,62 @@ namespace ProPreASP.Controllers
         {
             return View();
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Protein(IFormFile file, string diseaseName)
+        {
+            try
+            {
+                if (file != null && file.Length > 0)
+                {
+                    using (var client = new HttpClient())
+                    {
+                        try
+                        {
+                            client.BaseAddress = new Uri("http://127.0.0.1:57000/PDB2SEQ");
+
+                            byte[] data;
+                            using (var br = new BinaryReader(file.OpenReadStream()))
+                                data = br.ReadBytes((int)file.OpenReadStream().Length);
+
+                            ByteArrayContent bytes = new ByteArrayContent(data);
+
+
+                            MultipartFormDataContent multiContent = new MultipartFormDataContent();
+
+                            multiContent.Add(bytes, "file", file.FileName);
+                            using (var result = await client.PostAsync(client.BaseAddress, multiContent))
+                            {
+                                var newResult = System.Text.Encoding.UTF8.GetString(await result.Content.ReadAsByteArrayAsync());
+                                string dnaSeq = newResult;
+                                var url = "http://127.0.0.1:57000/GetAminoSeq/" + newResult;
+                                var userSessionId = "a" + HttpContext.Session.Id;
+                                string webRootPath = _webHostEnvironment.WebRootPath;
+                                await Task.Run(() =>
+                                 DownloadFile(url, webRootPath + "\\pdbFiles", userSessionId + ".pdb"));
+
+                                var filePath = userSessionId + ".pdb";
+                                return RedirectToAction("dna3d", new { filePath, dnaSeq, diseaseName });
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            return StatusCode(500); // 500 is generic server error
+                        }
+                    }
+                }
+
+                return StatusCode(400); // 400 is bad request
+
+            }
+            catch (Exception)
+            {
+                return StatusCode(500); // 500 is generic server error
+            }
+        }
+
 
         public IActionResult Privacy()
         {
