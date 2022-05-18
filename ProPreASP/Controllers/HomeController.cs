@@ -3,6 +3,8 @@ using ProPreASP.Models;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net.Http;
+using System.Text;
 
 namespace ProPreASP.Controllers
 {
@@ -50,8 +52,9 @@ namespace ProPreASP.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> dna(string dnaSeq, string diseaseName, IFormFile file)
         {
+            var oldDate = DateTime.Now;
             // ATGGGTCCTTCAGTAGTTCCTATTAACCCA
-            var url = "http://127.0.0.1:57000/GetAminoSeq/" + dnaSeq;
+            var url = "http://127.0.0.1:57000/GetAminoSeq";
             string webRootPath = _webHostEnvironment.WebRootPath;
             if (file != null)
             {
@@ -69,19 +72,21 @@ namespace ProPreASP.Controllers
                             dnaSeq += item;
                         }
                     }
-                    url = "http://127.0.0.1:57000/GetAminoSeq/" + dnaSeq;
+                    url = "http://127.0.0.1:57000/GetAminoSeq/";
                 }
             }
             var userSessionId = "a" + HttpContext.Session.Id;
             await Task.Run(() =>
-             DownloadFile(url, webRootPath + "\\pdbFiles", userSessionId + ".pdb"));
+             DownloadFile(url, dnaSeq, webRootPath + "\\pdbFiles", userSessionId + ".pdb"));
 
             var filePath = userSessionId + ".pdb";
-            return RedirectToAction("dna3d", new {filePath, dnaSeq, diseaseName});
+            TempData["Sequence"] = dnaSeq;
+            return RedirectToAction("dna3d", new {filePath, diseaseName, oldDate});
         }
 
-        public async Task<IActionResult> dna3d(string filePath, string dnaSeq, string diseaseName)
+        public async Task<IActionResult> dna3d(string filePath, string diseaseName, DateTime oldDate)
         {
+            string dnaSeq = (string)TempData["Sequence"];
             if (diseaseName == "rheumatoid arthritis cardiac")
             {
                 var data = await GetJsonAlign(dnaSeq, "Homo-il34-v1.fasta");
@@ -89,6 +94,9 @@ namespace ProPreASP.Controllers
                 ViewData["Score"] = Convert.ToDouble(data["Score"]);
                 ViewData["Alignment1"] = data["Alignment"][0];
                 ViewData["Alignment2"] = data["Alignment"][1];
+                var newDate = DateTime.Now;
+                var TimeTaken = newDate - oldDate;
+                ViewData["TimeTaken"] = TimeTaken;
                 return View();
             }
             else if (diseaseName == "rheumatoid arthritis in bones")
@@ -98,10 +106,23 @@ namespace ProPreASP.Controllers
                 ViewData["Score"] = Convert.ToDouble(data["Score"]);
                 ViewData["Alignment1"] = data["Alignment"][0];
                 ViewData["Alignment2"] = data["Alignment"][1];
+                var newDate = DateTime.Now;
+                var TimeTaken = newDate - oldDate;
+                ViewData["TimeTaken"] = TimeTaken;
                 return View();
             }
             return BadRequest();
             //return Redirect("~/index.html");
+        }
+
+        static async Task DownloadFile(string url, string dnaSeq, string pathToSave, string fileName)
+        {
+            var content = await GetUrlContent(url, dnaSeq);
+            if (content != null)
+            {
+                if (!Directory.Exists(pathToSave)) Directory.CreateDirectory(pathToSave);
+                await System.IO.File.WriteAllBytesAsync($"{pathToSave}/{fileName}", content);
+            }
         }
 
         static async Task DownloadFile(string url, string pathToSave, string fileName)
@@ -114,16 +135,26 @@ namespace ProPreASP.Controllers
             }
         }
 
-        static async Task<byte[]?> GetUrlContent(string url)
+        static async Task<byte[]?> GetUrlContent(string url, string seq)
         {
             using (var client = new HttpClient())
             {
-                client.Timeout = TimeSpan.FromSeconds(900);
-                using (var result = await client.GetAsync(url))
+                client.Timeout = TimeSpan.FromSeconds(90000);
+                var content = new StringContent(JsonConvert.SerializeObject(seq), Encoding.UTF8, "application/json");
+                using (var result = await client.PutAsync(url, content))
                     return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
             }
         }
 
+        static async Task<byte[]?> GetUrlContent(string url)
+        {
+            using (var client = new HttpClient())
+            {
+                client.Timeout = TimeSpan.FromSeconds(90000);
+                using (var result = await client.GetAsync(url))
+                    return result.IsSuccessStatusCode ? await result.Content.ReadAsByteArrayAsync() : null;
+            }
+        }
 
         public IActionResult protien()
         {
@@ -135,6 +166,7 @@ namespace ProPreASP.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Protein(IFormFile file, string diseaseName)
         {
+            var startTime = DateTime.Now;
             try
             {
                 if (file != null && file.Length > 0)
@@ -159,14 +191,15 @@ namespace ProPreASP.Controllers
                             {
                                 var newResult = System.Text.Encoding.UTF8.GetString(await result.Content.ReadAsByteArrayAsync());
                                 string dnaSeq = newResult;
-                                var url = "http://127.0.0.1:57000/GetAminoSeq/" + newResult;
+                                var url = "http://127.0.0.1:57000/GetAminoSeq/";
                                 var userSessionId = "a" + HttpContext.Session.Id;
                                 string webRootPath = _webHostEnvironment.WebRootPath;
                                 await Task.Run(() =>
-                                 DownloadFile(url, webRootPath + "\\pdbFiles", userSessionId + ".pdb"));
+                                 DownloadFile(url, newResult, webRootPath + "\\pdbFiles", userSessionId + ".pdb"));
 
                                 var filePath = userSessionId + ".pdb";
-                                return RedirectToAction("dna3d", new { filePath, dnaSeq, diseaseName });
+                                TempData["Sequence"] = dnaSeq;
+                                return RedirectToAction("dna3d", new { filePath, diseaseName, startTime });
                             }
                         }
                         catch (Exception)

@@ -9,7 +9,7 @@
 </iframe>
 
 <div rows="20" cols="120" contenteditable="false">
-    <h2 style="font-family: monospace;">
+    <div style="font-family: monospace;">
         @{var first = ViewData["Alignment1"];}
         <label for="Reference">Reference Alignment</label>
         <textarea name="Reference" rows="10" style="display: block; width: 100%;">@first</textarea>
@@ -17,7 +17,17 @@
         <label for="Pattern">Pattern Alignment</label>
         <textarea name="Pattern" rows="10" style="display: block; width: 100%;">@second</textarea>
         <p>Score: @Convert.ToDouble(ViewData["Score"]).ToString("0.000")%</p>
-    </h2>
+        @{
+            var TotalTime = (TimeSpan)Convert.ChangeType(ViewData["TimeTaken"], typeof(TimeSpan));
+        }
+        <p>Time taken for the operation since submitting till showing page: </p>
+        <ul>
+            <li>Days:@(TotalTime.ToString(@"%d"))</li>
+            <li>Hours:@(TotalTime.ToString(@"%h"))</li>
+            <li>Minutes:@(TotalTime.ToString(@"%m"))</li>
+            <li>Seconds:@(TotalTime.ToString(@"%s"))</li>
+        </ul>
+    </div>
 </div>
 <p>
     don't forget that whenever you have something important to do, There is also the most important thing in your life: God.

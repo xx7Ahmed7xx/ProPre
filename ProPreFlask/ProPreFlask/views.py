@@ -171,12 +171,13 @@ _type = 'helix'
 #_type = 'polypro'
 #_type = 'antiparallel'
 
+import flask
 
-
-@app.route('/GetAminoSeq/<string:seq>')
-def GetAminoSeq(seq=''):
+@app.route('/GetAminoSeq', methods=['PUT'])
+def GetAminoSeq():
     #>My fasta file with headers
     #AGAWDFAWDAWDAD.......
+    seq = flask.request.json
     seq = '>Alpha\n' + seq + '\n' # Virtual file handle from sequence string.
     for seq_record in SeqIO.parse(StringIO(seq), "fasta"):
         build_seq(seq_record.seq, _type) # The actual sequence.
